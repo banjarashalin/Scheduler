@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scheduler.mappers.DepartmentTimeslotMapper">
+
+<!-- Author - Shalin Banjara  -->
+<!-- Usage - To get available timeslots for a particular department Id if they still have a capacity to book a appointment-->
+	<select id="getTimeslotByDepartment" parameterType="com.scheduler.models.Utility" resultType="com.scheduler.models.DepartmentTimeslotLinkage">
+		select dept.*, ts.startTime, ts.stopTime from departmenttimeslot dept, timeslot ts where 
+		dept.departmentId = #{departmentId} and dept.timeslotId = ts.timeslotId and 
+		dept.capacity > (select count(appointmentId) from appointment 
+		where meetingFinished = 'N' and appointmentDate = #{appointmentDate} and  
+		departmentTimeId in (select departmentTimeId from departmenttimeslot 
+		where departmentId = #{departmentId}));
+	</select>
+
+  <!-- Author - Ruby Verma -->
+  <!-- Usage - save department-->
+  <insert id="saveDepartmentTimeslot" parameterType="com.scheduler.models.Departmenttimeslot" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+    insert into departmenttimeslot(departmentId, timeslotId, weekdays, capacity) values
+    (#{departmentId}, #{timeslotId}, #{weekdays}, #{capacity})
+    <selectKey keyProperty="id" resultType="Integer" order="AFTER">
+      select last_insert_id()
+    </selectKey>
+  </insert>
+  
+  
+   <!-- Author - Ruby Verma -->
+    <!-- Usage - To select a list of departments for a particular campus -->
+	<select id="getDepartmentTimeslot" parameterType="int" resultType="com.scheduler.models.Departmenttimeslot">
+		select * from departmenttimeslot dst, timeslot slt where departmentId = #{departmentId} and dst.timeslotId = slt.timeslotId
+	</select>
+
+  <!-- Author - Ruby Verma -->
+  <!-- Usage - update department-->
+  <update id="updateDepartmentTimeslot" parameterType="int">
+    update departmenttimeslot
+    set
+    timeslotId = #{timeslotId},
+    weekdays = #{weekdays},
+    capacity = #{capacity}
+    where departmentTimeId = #{departmentTimeId}
+  </update> 
+  
+  <select id="deleteDepartmentTimeslot" parameterType="int">
+    delete from departmenttimeslot where departmentId = #{departmentId}
+  </select> 
+</mapper>
